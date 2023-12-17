@@ -48,9 +48,14 @@ class Table:
     def insert(self, inserted_table):
         self.table.append(inserted_table)
 
-    def update(self,user_id,change,updated):
+    def update(self,key,value,change,updated):
         for i in self.table:
-            if i['ID'] == user_id:
+            if i[key] == value:
+                i[change] = updated
+
+    def update2(self,key,value,key2,value2,change,updated):
+        for i in self.table:
+            if i[key] == value and i[key2] == value2:
                 i[change] = updated
 
     def filter(self, condition):

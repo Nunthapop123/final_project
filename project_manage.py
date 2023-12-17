@@ -8,21 +8,20 @@ read = Read()
 
 
 class Admin:
-    def __init__(self, person_table, login_table,project_table):
-        self.person_table = person_table
-        self.login_table = login_table
-        self.project_table = project_table
+    def __init__(self, id):
+        self.id = id
 
 
     def see_project_info(self):
-        print(self.project_table.table)
+        print(_project.table)
+
     def manage_info(self):
         while True:
             user_choice = input('Select an option:\n '
-                            '1.Add an information\n '
-                            '2.Delete an information\n '
-                            '3.Edit an information \n'
-                            '4.Go back\n')
+                                '1.Add an information\n '
+                                '2.Delete an information\n '
+                                '3.Edit an information \n'
+                                '4.Go back\n')
             if user_choice == '1':
                 user_id = input('User_id: ')
                 first_name = input('First name: ')
@@ -30,35 +29,35 @@ class Admin:
                 type = input('Type: ')
                 username = f'{first_name}.{last_name[0]}'
                 password = randint(1000, 9999)
-                self.person_table.insert({'ID': user_id, 'first': first_name, 'last': last_name, 'type': type})
-                self.login_table.insert({'ID': user_id, 'username': username, 'password': password, 'role': type})
+                _person.insert({'ID': user_id, 'first': first_name, 'last': last_name, 'type': type})
+                _login.insert({'ID': user_id, 'username': username, 'password': password, 'role': type})
                 print(f'{user_id} {username} has added to the database')
             elif user_choice == '2':
                 remove_id = input('User_id you want to delete: ')
-                for person in self.person_table.table:
+                for person in _person.table:
                     if person['ID'] == remove_id:
-                        self.person_table.table.remove(person)
-                for person in self.login_table.table:
+                        _person.table.remove(person)
+                for person in _login.table:
                     if person['ID'] == remove_id:
-                        self.login_table.table.remove(person)
+                        _login.table.remove(person)
             elif user_choice == '3':
                 edit_id = input('User_id you want to edit: ')
-                for person in self.login_table.table:
+                for person in _login.table:
                     if person['ID'] == edit_id:
                         print(f"{person['ID']}\n"
-                            f"{person['username']} {person['password']}\n"
-                            f" {person['role']}")
+                              f"{person['username']} {person['password']}\n"
+                              f" {person['role']}")
                 change_choice = input('Select what to change:\n'
-                                    '1.Password\n2.Role')
+                                      '1.Password\n2.Role')
                 if change_choice == '1':
                     new_password = randint(1000, 9999)
-                    for person in self.login.table.table:
+                    for person in _login.table:
                         if person['ID'] == edit_id:
                             person['password'] = new_password
                     print('The new password is:', new_password)
                 elif change_choice == '2':
                     new_role = input('Enter new role:')
-                    for person in self.login_table.table:
+                    for person in _login.table:
                         if person['ID'] == edit_id:
                             person['role'] = new_role
             elif user_choice == '4':
@@ -68,28 +67,26 @@ class Admin:
 
 
 class Student:
-    def __init__(self, id, login_table,student_pending_table):
+    def __init__(self, id):
         self.id = id
-        self.login_table = login_table
-        for i in login_table:
-            if i['ID'] == id:
-                self.username = i['username']
-                self.role = i['role']
-        self.student_pending_table = student_pending_table
+        # for i in _login:
+        #     if i['ID'] == id:
+        #         self.username = i['username']
+        #         self.role = i['role']
+
     def create_project(self):
         print('Creating project....')
         project_name = input('Enter your project name: ')
-        self.role = 'lead'
         project_id = randint(000000, 999999)
-        project_info = {'Projectname': project_name, 'ProjectID': project_id, 'Lead': self.username, 'Member1': '-',
+        project_info = {'ProjectID': project_id,'Projectname': project_name,'Lead': self.id, 'Member1': '-',
                         'Member2': '-', 'Advisor': '-','Status': 'Working'}
-        self.login_table.update('ID', self.id, 'username', self.username, 'role', 'lead')
+        _login.update('ID',self.id,'role','lead')
         project_table = my_DB.search('project_table')
         project_table.table.insert(project_info)
 
-    def invitaion_detail(self):
+    def invitation_detail(self):
         invitation_count = 0
-        for i in self.student_pending_table.table:
+        for i in student_pending.table:
             if i['ReceiverID'] == self.id:
                 print(f"ProjectID: {i['ProjectID']}, LeadID: {i['InviterID']}")
                 invitation_count += 1
@@ -98,21 +95,107 @@ class Student:
         if invitation_count == 0:
             print('There are no invitation yet')
             return
+        #TODOถามก่อนใส่ชื่อโปรเจ็ก
         respond = input('Enter project: ')
-        for i in self.student_pending_table.table:
+        for i in student_pending.table:
             if i['ProjectID'] == respond and i['ReceiverID'] == self.id:
-                choice = input(f"Do you want to accept this {i['ProjectID']} from {i['ReceiverID']} (y/n): ")
+                choice = input(f"Do you want to accept this {i['ProjectID']} from {i['InviterID']} (y/n): ")
                 if choice.lower() == 'y':
                     i['Respond'] = 'Accepted'
+                    self.role = 'member'
+                    print(f'You are now a member of {i["ProjectID"]}')
+                    _login.update('ID',self.id,'role','member')
+                    student_pending.update2('ProjectID',respond,'ReceiverID',self.id,'Respond','Accepted')
+                    #TODO:check group member,update project.csv
                 elif choice.lower() == 'n':
                     i['Respond'] = 'Deny'
+                    print(f'You have denied the invitation')
+                    student_pending.update2('ProjectID', respond, 'ReceiverID', self.id, 'Respond', 'Deny')
                 else:
                     print('Invalid choice.')
+                    #TODO:update back to csv file
+class Member:
+    def __init__(self,id,projectID):
+        self.id = id
+        self.projectID = projectID
+    def show_group_info(self):
+        print(_project.table.filter(lambda x: x['ProjectID'] == self.projectID))
 
 
+class Lead:
+    def __init__(self,id,projectID):
+        self.id = id
+        self.projectID = projectID
+
+    def send_invitation_member(self):
+        receiverID = input('Enter ID who you want to invite: ')
+        member_info = {'ProjectID': self.projectID, 'InviterID': self.id, 'ReceiverID': receiverID, 'Respond': 'Pending'}
+        student_pending.insert(member_info)
+
+    def send_invitation_advisor(self):
+        advisorID = input('Enter ID who you want to invite: ')
+        advisor_info = {'ProjectID': self.projectID, 'InviterID': self.id, 'ReceiverID': advisorID, 'Respond': 'Pending'}
+        advisor_pending.insert(advisor_info)
+
+    def show_project_detail(self):
+        print(_project.table.filter(lambda x: x['ProjectID'] == self.projectID))
+
+    def submit_project(self):
+        _project.update2('ProjectID', self.projectID, 'Status', 'sent')
+        # save('project')
+        print('Project sent.')
 
 
+class Faculty:
+    def __init__(self,id):
+        self.id = id
 
+
+    def invitation_detail(self):
+        invitation_count = 0
+        for i in advisor_pending.table:
+            if i['AdvisorID'] == self.id:
+                print(f"ProjectID: {i['ProjectID']}, LeadID: {i['InviterID']}")
+                invitation_count += 1
+            else:
+                continue
+        if invitation_count == 0:
+            print('There are no invitation yet')
+            return
+        # TODOถามก่อนใส่ชื่อโปรเจ็ก
+        respond = input('Enter project: ')
+        for i in advisor_pending.table:
+            if i['ProjectID'] == respond and i['AdvisorID'] == self.id:
+                choice = input(f"Do you want to accept this {i['ProjectID']} from {i['InviterID']} (y/n): ")
+                if choice.lower() == 'y':
+                    i['Respond'] = 'Accepted'
+                    print(f'You are now an advisor of {i["ProjectID"]}')
+                    _login.update('ID', self.id, 'role', 'advisor')
+                    advisor_pending.update2('ProjectID', respond, 'AdvisorID', self.id, 'Respond', 'Accepted')
+                    # TODO:check group member,update project.csv
+                elif choice.lower() == 'n':
+                    i['Respond'] = 'Deny'
+                    print(f'You have denied the invitation')
+                    advisor_pending.update2('ProjectID', respond, 'AdvisorID', self.id, 'Respond', 'Deny')
+                else:
+                    print('Invalid choice.')
+                    # TODO:update back to csv file
+
+    def show_project_detail(self):
+        print(_project.table)
+
+    def evaluate_project(self):
+        advisor_choice = input('Enter project id you want to evaluate: ')
+        for i in _project.table:
+            if i['ProjectID'] == advisor_choice and i['Status'] == 'sent':
+                evaluate = input('Pass or Failed(p/f):')
+                if evaluate.lower() == 'p':
+                    _project.update('ProjectID',advisor_choice,'Status','Passed')
+                elif evaluate.lower() == 'f':
+                    _project.update('ProjectID',advisor_choice,'Status','Failed')
+            else:
+                print('Invalid project')
+class Advisor()
 
 
 def initializing():
@@ -121,19 +204,22 @@ def initializing():
     read_person = read.read_data('persons.csv')
     read_login = read.read_data('login.csv')
     read_project = read.read_data('project.csv')
-    read_student_pending = read.read_data('student_pending_invitaion.csv')
+    read_student_pending = read.read_data('student_pending_invitation.csv')
+    read_advisor_pending = read.read_data('advisor_pending_invitation.csv')
 
     # create all the corresponding tables for those csv files
     person_table = Table('persons', read_person)
     login_table = Table('login', read_login)
     project_table = Table('project', read_project)
     student_pending_table = Table('student_pending', read_student_pending)
+    advisor_pending_talbe = Table('advisor_pending', read_advisor_pending)
     # see the guide how many tables are needed
     # add all these tables to the database
     my_DB.insert(person_table)
     my_DB.insert(login_table)
     my_DB.insert(project_table)
     my_DB.insert(student_pending_table)
+    my_DB.insert(advisor_pending_talbe)
     return my_DB
 
 
@@ -175,11 +261,20 @@ def exit():
 
 initializing()
 val = login()
+_person = my_DB.search('persons')
+_login =  my_DB.search('login')
+_project = my_DB.search('project')
+student_pending = my_DB.search('student_pending')
+advisor_pending = my_DB.search('advisor_pending')
+# for i in _login:
+#     if i['ID'] == id:
+#         username = i['username']
+#         role = i['role']
 
 # based on the return value for login, activate the code that performs activities according to the role defined for that person_id
 
 if val[1] == 'admin':
-    admin = Admin(my_DB.search('persons'),my_DB.search('login'),my_DB.search('project'))
+    admin = Admin(val[0])
     while True:
         user_choice = input('Select your choice:\n1.See project info\n2.Manage project\n3.Exit\n')
         if user_choice == '1':
@@ -190,23 +285,63 @@ if val[1] == 'admin':
             pass
 
 elif val[1] == 'student':
-    student = Student(val[0], my_DB.search('login'),my_DB.search('student_pending'))
+    student = Student(val[0])
     while True:
         user_choice = input('Select your choice:\n1.See an invitation message\n3.Create Project\n4.Exit')
         if user_choice == '1':
-            student.invitaion_detail()
+            student.invitation_detail()
         elif user_choice == '2':
             student.create_project()
         elif user_choice == '3':
             pass
-# elif val[1] = 'member':
-# see and do member related activities
-# elif val[1] = 'lead':
-# see and do lead related activities
-# elif val[1] = 'faculty':
-# see and do faculty related activities
-# elif val[1] = 'advisor':
-# see and do advisor related activities
+elif val[1] == 'member':
+    projectID = ''
+    for i in _project.table:
+        if i['Member1'] or i['Member2'] == val[0]:
+            projectID = i['ProjectID']
+    member = Member(val[0],projectID)
+    while True:
+        user_choice = input('Select your choice:\n1.See project info\n2.Exit')
+        if user_choice == '1':
+            member.show_group_info()
+        elif user_choice == '2':
+            pass
+elif val[1] == 'lead':
+    projectID = ''
+    for i in _project.table:
+        if i['Lead'] == val[0]:
+            projectID = i['ProjectID']
+    lead = Lead(val[0],projectID)
+    while True:
+        user_choice = input('Select your choice:\n1.Send invitation to a member\n'
+                            '2.Send invitation to an advisor\n3.See and edit project\n'
+                            '4.Submit project\n5.Exit ')
+        if user_choice == '1':
+            lead.send_invitation_member()
+        elif user_choice == '2':
+            lead.send_invitation_advisor()
+        elif user_choice == '3':
+            lead.show_project_detail()
+        elif user_choice == '4':
+            lead.submit_project()
+        elif user_choice == '5':
+            pass
+elif val[1] == 'faculty':
+    faculty = Faculty()
+    while True:
+        user_choice = input('1.See an invitation message\n2.See project detail\n3.Evaluate project\n4.Exit')
+        if user_choice == '1':
+            faculty.invitation_detail()
+        elif user_choice == '2':
+            faculty.show_project_detail()
+        elif user_choice == '3':
+            faculty.evaluate_project()
+        elif user_choice == '4':
+            pass
+elif val[1] == 'advisor':
+    advisor = Advisor()
+    while True:
+        user_choice = input('1.See project detail\n2.Evaluate project\n3.Approve project\n4.Exit')
 else:
     print('Invalid role')
 # once everyhthing is done, make a call to the exit function
