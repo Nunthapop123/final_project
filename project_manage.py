@@ -1,4 +1,6 @@
 # import database module
+import sys
+
 from database import Read, Table, Database,Write
 from random import randint
 
@@ -6,6 +8,11 @@ from random import randint
 my_DB = Database()
 read = Read()
 write = Write()
+_update_person = False
+_update_login = False
+_update_project = False
+_update_student = False
+_update_advisor = False
 
 
 class Admin:
@@ -33,7 +40,9 @@ class Admin:
                 _person.insert({'ID': user_id, 'first': first_name, 'last': last_name, 'type': type})
                 _login.insert({'ID': user_id, 'username': username, 'password': password, 'role': type})
                 print(f'{user_id} {username} has added to the database')
-                update_person,update_login = True,True
+                global _update_person,_update_login
+                _update_person = True
+                _update_login = True
             elif user_choice == '2':
                 remove_id = input('User_id you want to delete: ')
                 for person in _person.table:
@@ -42,7 +51,8 @@ class Admin:
                 for person in _login.table:
                     if person['ID'] == remove_id:
                         _login.table.remove(person)
-                update_person,update_login = True,True
+                global _update_person, _update_login
+                _update_person,_update_login = True,True
             elif user_choice == '3':
                 edit_id = input('User_id you want to edit: ')
                 for person in _login.table:
@@ -59,14 +69,16 @@ class Admin:
                             person['password'] = new_password
                     print('The new password is:', new_password)
                     _login.update('ID',edit_id,'password',new_password)
-                    update_login = True
+                    global _update_login
+                    _update_login = True
                 elif change_choice == '2':
                     new_role = input('Enter new role:')
                     for person in _login.table:
                         if person['ID'] == edit_id:
                             person['role'] = new_role
                     _login.update('ID', edit_id, 'role', new_role)
-                    update_login = True
+                    global _update_login
+                    _update_login = True
             elif user_choice == '4':
                 break
             else:
@@ -86,7 +98,8 @@ class Student:
         _login.update('ID',self.id,'role','lead')
         project_table = my_DB.search('project_table')
         project_table.table.insert(project_info)
-        update_project = True
+        global _update_project
+        _update_project = True
     def invitation_detail(self):
         invitation_count = 0
         for i in student_pending.table:
@@ -118,12 +131,14 @@ class Student:
                         return
                     _login.update('ID',self.id,'role','member')
                     student_pending.update2('ProjectID',respond,'ReceiverID',self.id,'Respond','Accepted')
-                    update_project,update_login,update_student = True,True,True
+                    global _update_project, _update_login,_update_student
+                    _update_project,_update_login,_update_student = True,True,True
                 elif choice.lower() == 'n':
                     i['Respond'] = 'Deny'
                     print(f'You have denied the invitation')
                     student_pending.update2('ProjectID', respond, 'ReceiverID', self.id, 'Respond', 'Deny')
-                    update_student = True
+                    global _update_student
+                    _update_student = True
                 else:
                     print('Invalid choice.')
 
@@ -144,20 +159,23 @@ class Lead:
         receiverID = input('Enter ID who you want to invite: ')
         member_info = {'ProjectID': self.projectID, 'InviterID': self.id, 'ReceiverID': receiverID, 'Respond': 'Pending'}
         student_pending.insert(member_info)
-        update_student = True
+        global _update_student
+        _update_student = True
 
     def send_invitation_advisor(self):
         advisorID = input('Enter ID who you want to invite: ')
         advisor_info = {'ProjectID': self.projectID, 'InviterID': self.id, 'ReceiverID': advisorID, 'Respond': 'Pending'}
         advisor_pending.insert(advisor_info)
-        update_advisor = True
+        global _update_advisor
+        _update_advisor = True
 
     def show_project_detail(self):
         print(_project.table.filter(lambda x: x['ProjectID'] == self.projectID))
 
     def submit_project(self):
         _project.update2('ProjectID', self.projectID, 'Status', 'sent')
-        update_project = True
+        global _update_project
+        _update_project = True
         print('Project sent.')
 
 
@@ -194,12 +212,14 @@ class Faculty:
                         return
                     _login.update('ID', self.id, 'role', 'advisor')
                     advisor_pending.update2('ProjectID', respond, 'AdvisorID', self.id, 'Respond', 'Accepted')
-                    update_project,update_login,update_advisor = True,True,True
+                    global _update_project, _update_login, _update_advisor
+                    _update_project,_update_login,_update_advisor = True,True,True
                 elif choice.lower() == 'n':
                     i['Respond'] = 'Deny'
                     print(f'You have denied the invitation')
                     advisor_pending.update2('ProjectID', respond, 'AdvisorID', self.id, 'Respond', 'Deny')
-                    update_advisor = True
+                    global _update_advisor
+                    _update_advisor = True
                 else:
                     print('Invalid choice.')
 
@@ -216,7 +236,8 @@ class Faculty:
                     _project.update('ProjectID',faculty_choice,'Status','Passed')
                 elif evaluate.lower() == 'f':
                     _project.update('ProjectID',faculty_choice,'Status','Failed')
-                update_project = True
+                global _update_project
+                _update_project = True
             else:
                 print('Invalid project')
 class Advisor:
@@ -236,7 +257,8 @@ class Advisor:
                     _project.update('ProjectID',advisor_choice,'Status','Passed')
                 elif evaluate.lower() == 'f':
                     _project.update('ProjectID',advisor_choice,'Status','Failed')
-                update_project = True
+                global _update_project
+                _update_project = True
             else:
                 print('Invalid project')
 
@@ -249,7 +271,8 @@ class Advisor:
                     _project.update('ProjectID', advisor_choice, 'Status', 'Approved')
                 elif approval.lower() == 'd':
                     _project.update('ProjectID', advisor_choice, 'Status', 'Disapproved')
-                update_project = True
+                global _update_project
+                _update_project = True
             else:
                 print('Invalid project')
 
@@ -303,17 +326,20 @@ def login():
 
 # define a function called exit
 def exit():
-    if update_person == True:
+    print(_update_person)
+    if _update_person == True:
         write.write_data('persons',_person.table)
-    if update_student == True:
+        print('Added person')
+    if _update_student == True:
         write.write_data('student_pending_invitation',student_pending.table)
-    if update_project == True:
+    if _update_project == True:
         write.write_data('project',_project.table)
-    if update_login == True:
+    if _update_login == True:
         write.write_data('login',_login.talbe)
-    if update_advisor == True:
+        print('Added login')
+    if _update_advisor == True:
         write.write_data('advisor_pending_invitation',advisor_pending.table)
-
+    sys.exit()
 
 
  #here are things to do in this function:
@@ -328,15 +354,11 @@ def exit():
 initializing()
 val = login()
 _person = my_DB.search('persons')
-_login =  my_DB.search('login')
+_login = my_DB.search('login')
 _project = my_DB.search('project')
 student_pending = my_DB.search('student_pending_invitation')
 advisor_pending = my_DB.search('advisor_pending_invitation')
-update_person = False
-update_login = False
-update_project = False
-update_student = False
-update_advisor = False
+
 
 # based on the return value for login, activate the code that performs activities according to the role defined for that person_id
 
