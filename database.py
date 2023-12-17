@@ -13,6 +13,14 @@ class Read:
                 data.append(dict(r))
         return data
 
+class Write:
+    def write_data(self,file_name,data):
+        myFile = open(file_name + '.csv', 'w')
+        writer = csv.DictWriter(myFile,fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+        myFile.close()
+        print('Save success!')
 # add in code for a Database class
 class Database:
     def __init__(self):
