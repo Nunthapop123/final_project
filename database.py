@@ -50,7 +50,8 @@ class Table:
 
     def update(self,user_id,change,updated):
         for i in self.table:
-            print(i)
+            if i['ID'] == user_id:
+                i[change] = updated
 
     def filter(self, condition):
         filtered_table = Table(self.table_name + '_filtered', [])
