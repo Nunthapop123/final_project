@@ -329,17 +329,14 @@ def login():
 
 # define a function called exit
 def exit():
-    print(_update_person)
     if _update_person == True:
         write.write_data('persons', _person.table)
-        print('Added person')
     if _update_student == True:
         write.write_data('student_pending_invitation', student_pending.table)
     if _update_project == True:
         write.write_data('project', _project.table)
     if _update_login == True:
         write.write_data('login', _login.talbe)
-        print('Added login')
     if _update_advisor == True:
         write.write_data('advisor_pending_invitation', advisor_pending.table)
     sys.exit()
@@ -454,6 +451,6 @@ elif val[1] == 'advisor':
         elif user_choice == '4':
             exit()
 else:
-    print('Invalid role. Please try again!')
+    print('Invalid choice. Please try again!')
 # once everyhthing is done, make a call to the exit function
 exit()

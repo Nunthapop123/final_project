@@ -20,7 +20,7 @@ class Write:
         writer.writeheader()
         writer.writerows(data)
         myFile.close()
-        print('Save success!')
+
 # add in code for a Database class
 class Database:
     def __init__(self):
